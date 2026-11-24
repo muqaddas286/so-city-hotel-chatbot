@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SO City Hotel Malta - AI Concierge Chatbot</title>
+  <style>
+    /* =========================================================
+       SO CITY HOTEL AI CONCIERGE - ISOLATED PRODUCTION STYLES
+       ========================================================= */
+    :root {
+      --sc-primary: #111111;
+      --sc-secondary: #1e1e1e;
+      --sc-accent: #d4af37;
+      --sc-accent-light: #f3e5ab;
+      --sc-bg: #f6f7f9;
+      --sc-white: #ffffff;
+      --sc-text: #1a1a1a;
+      --sc-muted: #666666;
+      --sc-border: #e2e8f0;
+      --sc-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #eef1f5;
+    }
+
+    /* Floating Launcher */
+    .socity-launcher {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #111111 0%, #262626 100%);
+      color: var(--sc-accent);
+      border: 2px solid var(--sc-accent);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+    }
+
+    .socity-launcher:hover {
+      transform: scale(1.07);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
+    }
+
+    .socity-launcher svg {
+      width: 28px;
+      height: 28px;
+      fill: currentColor;
+    }
+
+    /* Notification Badge */
+    .socity-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 18px;
+      height: 18px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+    }
+
+    /* Chat Window */
+    .socity-widget {
+      position: fixed;
+      bottom: 100px;
+      right: 24px;
+      width: 405px;
+      max-width: calc(100vw - 32px);
+      height: 600px;
+      max-height: calc(100vh - 125px);
+      background: var(--sc-white);
+      border-radius: 20px;
+      box-shadow: var(--sc-shadow);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 99999;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.98);
+      transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .socity-widget.is-open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Header */
+    .socity-header {
+      background: linear-gradient(135deg, #111111 0%, #1f1f1f 100%);
+      color: var(--sc-white);
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--sc-accent);
+      flex-shrink: 0;
+    }
+
+    .socity-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .socity-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--sc-accent);
+      color: var(--sc-primary);
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .socity-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .socity-status {
+      margin-top: 3px;
+      font-size: 11.5px;
+      color: #4ade80;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .socity-status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      background: #4ade80;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .socity-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .socity-icon-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--sc-white);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .socity-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Promo Strip */
+    .socity-promo-bar {
+      background: #fdf8e6;
+      color: #5c4809;
+      font-size: 12px;
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f0e2b6;
+      flex-shrink: 0;
+    }
+
+    .socity-copy-btn {
+      background: var(--sc-primary);
+      color: var(--sc-accent);
+      border: none;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .socity-copy-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* Messages Container */
+    .socity-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background: var(--sc-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .socity-msg {
+      max-width: 86%;
+      padding: 12px 14px;
+      border-radius: 15px;
+      font-size: 13.5px;
+      line-height: 1.52;
+      word-wrap: break-word;
+    }
+
+    .socity-msg.bot {
+      background: var(--sc-white);
+      color: var(--sc-text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      border: 1px solid #ededed;
+    }
+
+    .socity-msg.user {
+      background: var(--sc-primary);
+      color: var(--sc-white);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .socity-msg a {
+      color: #a67c00;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    /* Scrollable Quick Options Wrapper */
+    .socity-chips-wrapper {
+      background: var(--sc-white);
+      border-top: 1px solid var(--sc-border);
+      padding: 8px 12px 6px;
+      flex-shrink: 0;
+    }
+
+    .socity-chips-label {
+      font-size: 10.5px;
+      color: var(--sc-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .socity-chips {
+      display: flex;
+      gap: 7px;
+      padding-bottom: 6px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+
+    /* Visible clean scrollbar on desktop & mobile */
+    .socity-chips::-webkit-scrollbar {
+      height: 5px;
+    }
+
+    .socity-chips::-webkit-scrollbar-track {
+      background: #f1f3f5;
+      border-radius: 10px;
+    }
+
+    .socity-chips::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .socity-chips::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .socity-chip {
+      background: #f3f4f6;
+      color: var(--sc-text);
+      border: 1px solid #dcdfe4;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .socity-chip:hover {
+      background: var(--sc-primary);
+      color: var(--sc-accent);
+      border-color: var(--sc-primary);
+    }
+
+    /* Input Bar */
+    .socity-form {
+      display: flex;
+      padding: 10px 14px 12px;
+      background: var(--sc-white);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .socity-input {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      border-radius: 24px;
+      padding: 10px 16px;
+      font-size: 13.5px;
+      color: var(--sc-text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .socity-input:focus {
+      border-color: var(--sc-primary);
+    }
+
+    .socity-send {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--sc-primary);
+      color: var(--sc-accent);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .socity-send:hover {
+      background: #2b2b2b;
+      transform: scale(1.04);
+    }
+
+    .socity-send svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .socity-typing {
+      font-size: 12px;
+      color: var(--sc-muted);
+      font-style: italic;
+      padding: 2px 4px;
+    }
+
+    @media (max-width: 480px) {
+      .socity-widget {
+        right: 12px;
+        bottom: 90px;
+        width: calc(100vw - 24px);
+        height: 76vh;
+      }
+      .socity-launcher {
+        right: 16px;
+        bottom: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Chat Launcher -->
+  <button class="socity-launcher" id="socityLauncher" aria-label="Open SO City Hotel Concierge">
+    <span class="socity-badge" id="socityBadge">1</span>
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+  </button>
+
+  <!-- Chat Widget -->
+  <div class="socity-widget" id="socityWidget" role="dialog" aria-label="SO City Hotel AI Concierge">
+    <!-- Header -->
+    <div class="socity-header">
+      <div class="socity-header-left">
+        <div class="socity-avatar">SO</div>
+        <div>
+          <h4 class="socity-title">SO City AI Concierge</h4>
+          <div class="socity-status">Online 24/7 • Paceville, Malta</div>
+        </div>
+      </div>
+      <div class="socity-header-actions">
+        <button class="socity-icon-btn" id="socityReset" title="Reset Conversation">↻</button>
+        <button class="socity-icon-btn" id="socityClose" title="Close Chat">&times;</button>
+      </div>
+    </div>
+
+    <!-- Direct Booking Promo Strip -->
+    <div class="socity-promo-bar">
+      <span>🎁 Get <strong>€10.00 OFF</strong> direct bookings: <strong>SOCITY</strong></span>
+      <button class="socity-copy-btn" id="socityCopyBtn" type="button">Copy Code</button>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="socity-messages" id="socityMessages"></div>
+
+    <!-- Scrollable Quick Reply Options -->
+    <div class="socity-chips-wrapper">
+      <div class="socity-chips-label">
+        <span>QUICK OPTIONS</span>
+        <span>Scroll right →</span>
+      </div>
+      <div class="socity-chips" id="socityChips">
+        <button type="button" class="socity-chip" data-query="2 pax room with breakfast price">🍳 2 Pax + Breakfast</button>
+        <button type="button" class="socity-chip" data-query="Hotel services">✨ Services</button>
+        <button type="button" class="socity-chip" data-query="Show all 6 rooms">🛏️ Rooms & Suites</button>
+        <button type="button" class="socity-chip" data-query="Rooftop pool and sunbeds">🏊 Rooftop Pool</button>
+        <button type="button" class="socity-chip" data-query="Breakfast buffet and dining">🥐 Breakfast Menu</button>
+        <button type="button" class="socity-chip" data-query="Excursions and tours in Malta">🚤 Excursions</button>
+        <button type="button" class="socity-chip" data-query="Nightclub perks and wristband">🎉 Club Perks</button>
+        <button type="button" class="socity-chip" data-query="Airport transfer booking">🚖 Transfers</button>
+        <button type="button" class="socity-chip" data-query="Direct booking offers and promo code">🎁 Offers & Promo</button>
+        <button type="button" class="socity-chip" data-query="Location and contact details">📍 Contact</button>
+      </div>
+    </div>
+
+    <!-- Input Form -->
+    <form class="socity-form" id="socityForm">
+      <input
+        type="text"
+        class="socity-input"
+        id="socityInput"
+        placeholder="Ask anything — rooms, 2 pax rate, pool, tours..."
+        autocomplete="off"
+        required
+      />
+      <button type="submit" class="socity-send" aria-label="Send message">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // =========================================================
+      // 1. COMPLETE VERIFIED KNOWLEDGE BASE (SO CITY HOTEL MALTA)
+      // =========================================================
+      const KNOWLEDGE_BASE = [
+        {
+          id: "greeting",
+          keywords: ["hello", "hi", "hey", "salam", "good morning", "good evening", "start", "help", "yo", "sup"],
+          response:
+            "Hey there! Welcome to <strong>SO City Hotel</strong> in Paceville, St. Julian's, Malta! 🌟<br><br>" +
+            "I'm here to help with anything about your stay — whether you want to check <strong>2-person room options & breakfast offers, rooftop pool sunbeds, Malta excursions, nightclub perks, or our €10 promo code (SOCITY)</strong>. What's on your mind?"
+        },
+        {
+          id: "casual_chat",
+          keywords: [
+            "how are you", "how r u", "what's up", "whats up", "who are you", "your name",
+            "thank you", "thanks", "thx", "great", "awesome", "nice", "cool",
+            "bye", "goodbye", "see you", "ok", "okay", "alright", "good"
+          ],
+          response:
+            "I'm doing great, thanks for asking! 😊 I'm the <strong>SO City AI Concierge</strong> for SO City Hotel in Paceville, Malta.<br><br>" +
+            "Whenever you're ready, feel free to ask about <strong>room availability for 2 guests with breakfast, our rooftop pool, Blue Lagoon & Gozo excursions, or direct booking discounts</strong>!"
+        },
+        {
+          id: "two_pax_breakfast_rate",
+          keywords: [
+            "2 pax", "two pax", "2 persons", "two persons", "2 guests", "two guests",
+            "per night", "nightly", "how much", "cost", "room with breakfast",
+            "with breakfast", "breakfast price", "breakfast rate", "tariff", "booking rate"
+          ],
+          response:
+            "🛏️🍳 <strong>Room for 2 Guests (2 Pax) & Breakfast Info:</strong><br><br>" +
+            "• <strong>Nightly Rates:</strong> Live per-night prices vary by travel dates, season, and room category — a fixed nightly tariff isn't listed publicly on the website.<br>" +
+            "• <strong>Best Rooms for 2 Guests:</strong> <em>Balcony Room (18 SqM, courtyard/smoking balcony)</em>, <em>Urban Room (20 SqM, internal view)</em>, <em>City Room (20 SqM, Paceville street view)</em>, or <em>Deluxe Room / Deluxe Suite with Jacuzzi</em>.<br>" +
+            "• <strong>Breakfast & Savings:</strong> We serve a freshly prepared daily <strong>Breakfast Buffet / A'la Carte</strong>, offer <strong>Free Breakfast</strong> on direct bookings (valid through end of May), plus <strong>€10.00 OFF</strong> direct bookings with code <strong>SOCITY</strong>!<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Check Live Rates & Book Direct</a><br>" +
+            "✉️ Or email <strong>reservations@socityhotel.com</strong> / call <strong>+356 2720 3959</strong> for exact dates."
+        },
+        {
+          id: "services",
+          keywords: [
+            "service", "services", "what do you offer", "hospitality",
+            "reception", "concierge", "24/7", "24 hours", "guest services"
+          ],
+          response:
+            "✨ <strong>SO City Hotel Services:</strong><br><br>" +
+            "Our dedicated team is available <strong>around the clock (24/7)</strong> to make your stay effortless:<br><br>" +
+            "• <strong>Accommodation:</strong> 6 room & suite styles (Balcony, Urban, City, Quad & Jacuzzi rooms/suites).<br>" +
+            "• <strong>Rooftop Pool & Sunbeds:</strong> Rooftop infinity pool (May–Sept) with reception sunbed pre-booking & Food/Drinks menus.<br>" +
+            "• <strong>Breakfast Dining:</strong> Daily freshly prepared Continental Breakfast Buffet & A'la Carte.<br>" +
+            "• <strong>24/7 Private Transfers:</strong> Direct airport & local transfer bookings.<br>" +
+            "• <strong>Excursions & Tours:</strong> Instant booking for Blue Lagoon cruises, Gozo, Valletta, Quad Bikes & Jeep tours.<br>" +
+            "• <strong>Nightlife Perks:</strong> Free & Fast-Pass entry at top Paceville clubs in July & August for 2+ night stays.<br>" +
+            "• <strong>Corporate & Group Events:</strong> Tailored company events in Paceville."
+        },
+        {
+          id: "all_rooms",
+          keywords: ["all rooms", "rooms", "room", "accommodation", "stay", "options", "categories", "types", "sleep"],
+          response:
+            "🛏️ <strong>Our 6 Modern Room Categories:</strong><br><br>" +
+            "1️⃣ <strong>Balcony Room (18 SqM):</strong> 2 Guests | Double Bed Only | Courtyard view + private smoking balcony.<br>" +
+            "2️⃣ <strong>Urban Room (20 SqM):</strong> 1–2 Guests | Single, twins, or double | Peaceful internal view.<br>" +
+            "3️⃣ <strong>City Room (20 SqM):</strong> 1–2 Guests | Single or double | Main Paceville street view.<br>" +
+            "4️⃣ <strong>Quad Room:</strong> 1–4 Guests | 2 bedrooms (twins or double) | Internal view — ideal for groups.<br>" +
+            "5️⃣ <strong>Deluxe Room with Jacuzzi:</strong> 1–2 Guests | Single/double + private terrace with outdoor hot tub & street view.<br>" +
+            "6️⃣ <strong>Deluxe Suite with Jacuzzi (60 SqM):</strong> 1–2 Guests | Spacious luxury suite with exclusive outdoor hot tub & street view.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>View Full Room Details & Book Now</a>"
+        },
+        {
+          id: "balcony_room",
+          keywords: ["balcony", "smoking", "smoke", "courtyard", "18 sqm", "18"],
+          response:
+            "🌿 <strong>Balcony Room Details:</strong><br><br>" +
+            "• <strong>Size & Capacity:</strong> 18 SqM | 2 Persons (Double Bed Only)<br>" +
+            "• <strong>View:</strong> Faces the back side of the hotel with an external courtyard view.<br>" +
+            "• <strong>Features:</strong> Unique wallpaper, amenities exceeding 3-star expectations, and <strong>ideal for guests wanting a private smoking area</strong>.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Book Balcony Room</a>"
+        },
+        {
+          id: "urban_room",
+          keywords: ["urban", "quiet", "peaceful", "internal view", "twin", "twins"],
+          response:
+            "🏙️ <strong>Urban Room Details:</strong><br><br>" +
+            "• <strong>Size & Capacity:</strong> 20 SqM | 1 or 2 Persons<br>" +
+            "• <strong>Bed & View:</strong> Single, twins, or double bed with peaceful internal views.<br>" +
+            "• <strong>Features:</strong> Contemporary design offering a quiet retreat amidst vibrant Paceville & St. Julian's.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Book Urban Room</a>"
+        },
+        {
+          id: "city_room",
+          keywords: ["city room", "street view", "main road"],
+          response:
+            "🌃 <strong>City Room Details:</strong><br><br>" +
+            "• <strong>Size & Capacity:</strong> 20 SqM | 1 or 2 Persons<br>" +
+            "• <strong>Bed & View:</strong> Single or double bed facing the main road of Paceville (Street views).<br>" +
+            "• <strong>Features:</strong> Unique wallpaper, superior amenities, and just a stone's throw away from Malta's top nightclubs.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Book City Room</a>"
+        },
+        {
+          id: "quad_room",
+          keywords: ["quad", "group", "4 persons", "four", "family", "friends", "2 bedrooms", "two bedrooms"],
+          response:
+            "👨‍👩‍👧‍👦 <strong>Quad Room Details (Best for Groups):</strong><br><br>" +
+            "• <strong>Capacity:</strong> 1 – 4 Persons<br>" +
+            "• <strong>Layout:</strong> 2 bedrooms (twins or double beds) with internal view.<br>" +
+            "• <strong>Features:</strong> Spacious and inviting retreat built for shared moments and group comfort.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Book Quad Room</a>"
+        },
+        {
+          id: "jacuzzi_rooms",
+          keywords: ["jacuzzi", "hot tub", "deluxe", "suite", "60", "luxury", "terrace"],
+          response:
+            "🛁 <strong>Jacuzzi Rooms & Suites:</strong><br><br>" +
+            "• <strong>Deluxe Room with Jacuzzi:</strong> 1–2 Persons | Single or double bed, private terrace with outdoor hot tub & street views.<br>" +
+            "• <strong>Deluxe Suite with Jacuzzi (60 SqM):</strong> 1–2 Persons | Expansive luxury suite with exclusive outdoor hot tub, terrace & street views.<br><br>" +
+            "👉 <a href='https://socityhotels.com/rooms/' target='_blank' rel='noopener'>Book Jacuzzi Room or Suite</a>"
+        },
+        {
+          id: "rooftop_pool",
+          keywords: ["pool", "rooftop", "sunbed", "sunbeds", "sunbath", "drinks menu", "food menu", "infinity", "terrace pool"],
+          response:
+            "🏊 <strong>Rooftop Terrace & Infinity Pool:</strong><br><br>" +
+            "• <strong>Experience:</strong> A tranquil oasis overlooking Paceville's streets with stunning Malta views — open <strong>May to September</strong> (weather permitting).<br>" +
+            "• <strong>Sunbed Pre-Booking:</strong> Guests can <strong>pre-book a sunbed</strong> to guarantee a relaxing spot by contacting reception.<br>" +
+            "• <strong>Poolside Dining:</strong> Dedicated Rooftop Food Menu & Drinks Menu available.<br><br>" +
+            "👉 <a href='https://socityhotels.com/amenities/' target='_blank' rel='noopener'>View Pool & Menus</a>"
+        },
+        {
+          id: "breakfast",
+          keywords: ["breakfast", "buffet", "a'la cart", "ala carte", "dining", "food", "eat", "meal", "morning", "continental"],
+          response:
+            "🍳 <strong>Breakfast Buffet / A'la Carte:</strong><br><br>" +
+            "• Enjoy a freshly prepared <strong>continental breakfast</strong> every morning in our relaxed dining area — ideal for both solo travelers and groups.<br>" +
+            "• <strong>Direct Booking Perk:</strong> Book directly on our website to receive <strong>Free Breakfast</strong> (offer valid through end of May).<br><br>" +
+            "👉 <a href='https://socityhotels.com/amenities/' target='_blank' rel='noopener'>View Breakfast Menu</a>"
+        },
+        {
+          id: "amenities",
+          keywords: ["amenity", "amenities", "wifi", "wi-fi", "internet", "ac", "air", "minibar", "mini bar", "safe", "tv", "samsung", "facility", "facilities"],
+          response:
+            "✨ <strong>SO City Hotel Amenities:</strong><br><br>" +
+            "• <strong>Rooftop Terrace & Infinity Pool:</strong> Open May–Sept with sunbed reservations & Food/Drinks menus.<br>" +
+            "• <strong>Breakfast Buffet / A'la Carte:</strong> Freshly prepared daily continental breakfast.<br>" +
+            "• <strong>Free High-Speed Wi-Fi:</strong> Complimentary throughout the entire hotel.<br>" +
+            "• <strong>In-Room Comforts:</strong> Individual air-conditioning, flat-screen Samsung TV, digital safe & stocked mini-bar (charged).<br><br>" +
+            "👉 <a href='https://socityhotels.com/amenities/' target='_blank' rel='noopener'>Explore All Amenities</a>"
+        },
+        {
+          id: "excursions",
+          keywords: [
+            "excursion", "excursions", "tour", "tours", "activity", "activities",
+            "valletta", "mdina", "gozo", "comino", "blue lagoon", "boat", "cruise",
+            "quad bike", "tuk-tuk", "tuktuk", "jeep", "hop-on", "museum", "theme park"
+          ],
+          response:
+            "🚤 <strong>Excursions & Activities in Malta:</strong><br><br>" +
+            "Upgrade your holiday with instant booking confirmation, 100% encrypted secure payment & 24h global support:<br>" +
+            "• <strong>Cultural & Island Tours:</strong> Valletta, medieval Mdina, Gozo day trips & Hop-on Hop-off tours.<br>" +
+            "• <strong>Cruises & Lagoons:</strong> Year-round boat tours & day cruises to <strong>Comino's Blue Lagoon</strong>.<br>" +
+            "• <strong>Adventure & Attractions:</strong> Self-drive <strong>Quad Bike</strong> tours, chauffeured <strong>Tuk-Tuk & Jeep</strong> tours, museums, theme parks & audio-visual shows.<br><br>" +
+            "📞 <strong>Excursions 24h Support:</strong> (+356) 2328 5555<br>" +
+            "✉️ <strong>Email:</strong> destinationservices.MLA@robertarrigo.com"
+        },
+        {
+          id: "nightlife_perks",
+          keywords: ["club", "clubs", "nightlife", "party", "perk", "perks", "wristband", "friends with benefits", "vip", "fast-pass", "privilege"],
+          response:
+            "🎉 <strong>'Friends with Benefits' Nightlife Perks:</strong><br><br>" +
+            "Guests staying <strong>2+ nights</strong> enjoy <strong>FREE ENTRANCE & FAST-PASS ENTRY</strong> during <strong>July & August</strong> at Paceville's top nightclubs (excluding special promoted artist events):<br>" +
+            "• Club H<br>• Footloose Fun Bar<br>• Shadow Club<br>• Havana Club<br>• Hive<br>• Passion Club"
+        },
+        {
+          id: "offers_promo",
+          keywords: ["promo", "discount", "offer", "offers", "code", "socity", "valentine", "christmas", "deal", "direct", "rate", "rates", "price"],
+          response:
+            "🎁 <strong>Exclusive Direct Booking Offers:</strong><br><br>" +
+            "• <strong>€10.00 OFF Direct Bookings:</strong> Apply promo code <strong>SOCITY</strong> when booking directly on our website.<br>" +
+            "• <strong>Free Breakfast Offer:</strong> Book direct for complimentary breakfast (valid through end of May).<br>" +
+            "• <strong>Seasonal Packages:</strong> Special Valentine's & Christmas holiday deals available.<br><br>" +
+            "👉 <a href='https://socityhotels.com/' target='_blank' rel='noopener'>Book Direct for Best Guaranteed Rates</a>"
+        },
+        {
+          id: "transfers",
+          keywords: ["transfer", "transfers", "airport", "taxi", "pickup", "ride", "car", "luggage", "transport"],
+          response:
+            "🚖 <strong>Airport & Private Transfers:</strong><br><br>" +
+            "Book your transfer directly via the <strong>'Book a Transfer'</strong> widget on our website! Simply select:<br>" +
+            "• <strong>From & To Locations</strong><br>" +
+            "• <strong>Pickup Date & Time</strong> (available 24/7 in 10-minute intervals)<br>" +
+            "• <strong>Number of Passengers & Luggage Pieces</strong>"
+        },
+        {
+          id: "about_location_contact",
+          keywords: [
+            "about", "location", "address", "where", "contact", "phone", "email",
+            "number", "malta", "paceville", "st julians", "beach", "beaches",
+            "instagram", "social", "corporate", "event", "events"
+          ],
+          response:
+            "📍 <strong>About SO City Hotel & Contact Details:</strong><br><br>" +
+            "Located in the lively heart of Paceville, St. Julian's — just steps away from beaches, shopping centers, cinemas, restaurants, and nightlife. We also host tailored <strong>company & group events</strong>.<br><br>" +
+            "• <strong>Address:</strong> Saint George's Road, Paceville, St. Julian's, STJ3200, Malta<br>" +
+            "• <strong>Hotel Reservations:</strong> +356 2720 3959 | reservations@socityhotel.com<br>" +
+            "• <strong>Excursions Support:</strong> (+356) 2328 5555 | destinationservices.MLA@robertarrigo.com<br>" +
+            "• <strong>Instagram:</strong> @socityhotel"
+        }
+      ];
+
+      const FALLBACK_RESPONSE =
+        "I'd love to help with that! Our team is available 24/7 for specific requests:<br><br>" +
+        "• <strong>Hotel Reservations:</strong> reservations@socityhotel.com | +356 2720 3959<br>" +
+        "• <strong>Excursions 24h Support:</strong> (+356) 2328 5555 | destinationservices.MLA@robertarrigo.com<br><br>" +
+        "You can also ask me about <em>Services, 2-Person Room & Breakfast Rates, Jacuzzi Suites, Rooftop Pool, Blue Lagoon Tours, Club Perks, or Promo Code SOCITY</em>.";
+
+      // =========================================================
+      // 2. DOM ELEMENTS & STATE
+      // =========================================================
+      const launcher = document.getElementById("socityLauncher");
+      const badge = document.getElementById("socityBadge");
+      const widget = document.getElementById("socityWidget");
+      const closeBtn = document.getElementById("socityClose");
+      const resetBtn = document.getElementById("socityReset");
+      const copyBtn = document.getElementById("socityCopyBtn");
+      const messagesEl = document.getElementById("socityMessages");
+      const formEl = document.getElementById("socityForm");
+      const inputEl = document.getElementById("socityInput");
+      const chips = document.querySelectorAll(".socity-chip");
+
+      let initialized = false;
+
+      // =========================================================
+      // 3. HELPER FUNCTIONS
+      // =========================================================
+      function appendMessage(html, sender) {
+        const bubble = document.createElement("div");
+        bubble.className = `socity-msg ${sender}`;
+        bubble.innerHTML = html;
+        messagesEl.appendChild(bubble);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function showWelcomeMessage() {
+        messagesEl.innerHTML = "";
+        appendMessage(
+          "👋 Welcome to <strong>SO City Hotel - St. Julian's, Malta</strong>!<br><br>" +
+            "Book direct and use promo code <strong>SOCITY</strong> for <strong>€10.00 OFF</strong>. How may I assist with your stay today?",
+          "bot"
+        );
+      }
+
+      function toggleWidget(forceOpen) {
+        const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : !widget.classList.contains("is-open");
+        widget.classList.toggle("is-open", shouldOpen);
+
+        if (shouldOpen) {
+          if (badge) badge.style.display = "none";
+          if (!initialized) {
+            initialized = true;
+            showWelcomeMessage();
+          }
+          setTimeout(() => inputEl.focus(), 200);
+        }
+      }
+
+      function findBestAnswer(userText) {
+        const normalized = userText
+          .toLowerCase()
+          .replace(/[^\w\s'-]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        let bestResponse = null;
+        let topScore = 0;
+
+        for (const entry of KNOWLEDGE_BASE) {
+          let score = 0;
+          for (const kw of entry.keywords) {
+            if (normalized.includes(kw)) {
+              score += kw.length * (kw.includes(" ") ? 1.6 : 1);
+            }
+          }
+          if (score > topScore) {
+            topScore = score;
+            bestResponse = entry.response;
+          }
+        }
+
+        return bestResponse || FALLBACK_RESPONSE;
+      }
+
+      function processUserQuery(text) {
+        const cleanText = text.trim();
+        if (!cleanText) return;
+
+        const safeUserText = cleanText
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        appendMessage(safeUserText, "user");
+
+        const typingIndicator = document.createElement("div");
+        typingIndicator.className = "socity-typing";
+        typingIndicator.textContent = "SO City Concierge is typing...";
+        messagesEl.appendChild(typingIndicator);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+        setTimeout(() => {
+          typingIndicator.remove();
+          const reply = findBestAnswer(cleanText);
+          appendMessage(reply, "bot");
+        }, 360);
+      }
+
+      // =========================================================
+      // 4. EVENT LISTENERS
+      // =========================================================
+      launcher.addEventListener("click", () => toggleWidget());
+      closeBtn.addEventListener("click", () => toggleWidget(false));
+
+      resetBtn.addEventListener("click", () => {
+        showWelcomeMessage();
+      });
+
+      copyBtn.addEventListener("click", () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText("SOCITY").then(() => {
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => (copyBtn.textContent = "Copy Code"), 2000);
+          });
+        } else {
+          copyBtn.textContent = "Code: SOCITY";
+          setTimeout(() => (copyBtn.textContent = "Copy Code"), 2000);
+        }
+      });
+
+      chips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const query = chip.getAttribute("data-query");
+          processUserQuery(query);
+        });
+      });
+
+      formEl.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const val = inputEl.value;
+        inputEl.value = "";
+        processUserQuery(val);
+      });
+    })();
+  </script>
+</body>
+</html>
